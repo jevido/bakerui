@@ -1,7 +1,10 @@
+import { PUBLIC_BAKERY_URL } from '$env/static/public';
+
 export const config = {
 	name: 'bakery-ui-sdk'
 };
 
+/* ------------------ SDK Generator ------------------ */
 export async function generateSDK(openapiUrl, { token } = {}) {
 	const spec = await fetch(openapiUrl).then((r) => r.json());
 	const baseUrl = openapiUrl.replace(/\/openapi\.json$/, '');
@@ -13,6 +16,8 @@ export async function generateSDK(openapiUrl, { token } = {}) {
 		path: []
 	});
 }
+export const sdk = await generateSDK(`${PUBLIC_BAKERY_URL}/openapi.json`);
+export let session = JSON.parse(localStorage.getItem('bakerui_session')) ?? { token: false };
 
 /* ------------------ Proxy Core ------------------ */
 
@@ -84,7 +89,7 @@ function createCaller({ spec, baseUrl, token, path, method }) {
 		const data = text ? JSON.parse(text) : null;
 
 		if (!res.ok) {
-			throw {
+			return {
 				status: res.status,
 				error: data,
 				path: openapiPath,
@@ -129,4 +134,28 @@ function buildUrl(baseUrl, template, actualSegments) {
 	}
 
 	return url;
+}
+
+// ------------------ authorization ------------------ //
+export async function login({ email, password }) {
+	const response = await sdk.auth.login.post({ email, password });
+
+	if (response.token) {
+		sdk.token = response.token;
+		session.token = response.token;
+	}
+
+	console.debug(response);
+
+	session = response;
+
+	localStorage.setItem('bakerui_session', JSON.stringify(session));
+
+	return response;
+}
+
+export async function logout() {
+	sdk.token = null;
+	session = { token: false };
+	localStorage.removeItem('bakerui_session');
 }

@@ -3,9 +3,10 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { toast } from 'svelte-sonner';
+	import { PUBLIC_BAKERY_URL } from '$env/static/public';
 
 	let health = $state('Loading random value...');
-	const sdk = await generateSDK('http://localhost:3000/openapi.json');
+	const sdk = await generateSDK(`${PUBLIC_BAKERY_URL}/openapi.json`);
 
 	async function fetchHealth() {
 		try {
